@@ -602,7 +602,34 @@ function sectionResumo() {
     agg.result_count = aggCampSum.result_count;
     agg.cpr = safeDiv(agg.spend, agg.result_count);
 
+    // Google Ads no mesmo periodo
+    var gRange = getDateRange();
+    var gDaily = (GOOGLE_DAILY || []).filter(d => inRange(d.date, gRange));
+    var g = {cost:0, impressions:0, clicks:0, conversions:0};
+    gDaily.forEach(d => {
+        g.cost += d.cost || 0;
+        g.impressions += d.impressions || 0;
+        g.clicks += d.clicks || 0;
+        g.conversions += d.conversions || 0;
+    });
+
     var html = '<div class="section-title">📊 Resumo Geral <span class="badge">' + rows.length + ' dias</span></div>';
+
+    // Consolidado Meta + Google
+    var totalCost = agg.spend + g.cost;
+    var totalImp = agg.impressions + g.impressions;
+    var totalClicks = agg.clicks + g.clicks;
+    var totalVendas = agg.purchases + Math.round(g.conversions);
+
+    html += '<div class="panel"><div class="panel-title">🔗 Consolidado Meta + Google</div>';
+    html += '<table><thead><tr><th>Métrica</th><th class="num">Meta Ads</th><th class="num">Google Ads</th><th class="num">Total</th></tr></thead><tbody>';
+    html += '<tr><td>💰 Investimento</td><td class="num">' + fmtBRL(agg.spend) + '</td><td class="num">' + fmtBRL(g.cost) + '</td><td class="num"><strong>' + fmtBRL(totalCost) + '</strong></td></tr>';
+    html += '<tr><td>👁 Impressões</td><td class="num">' + fmtNum(agg.impressions) + '</td><td class="num">' + fmtNum(g.impressions) + '</td><td class="num"><strong>' + fmtNum(totalImp) + '</strong></td></tr>';
+    html += '<tr><td>🖱 Cliques</td><td class="num">' + fmtNum(agg.clicks) + '</td><td class="num">' + fmtNum(g.clicks) + '</td><td class="num"><strong>' + fmtNum(totalClicks) + '</strong></td></tr>';
+    html += '<tr><td>📄 LP Views</td><td class="num">' + fmtNum(agg.lp_views) + '</td><td class="num" style="color:var(--muted)">—</td><td class="num"><strong>' + fmtNum(agg.lp_views) + '</strong></td></tr>';
+    html += '<tr><td>🛒 Vendas / Conversões</td><td class="num">' + fmtNum(agg.purchases) + '</td><td class="num">' + fmtNum(Math.round(g.conversions)) + '</td><td class="num"><strong>' + fmtNum(totalVendas) + '</strong></td></tr>';
+    html += '</tbody></table></div>';
+
     html += renderKPIs(agg, {primary:'both', dias:rows.length});
     html += renderFunil(agg, 'both');
 

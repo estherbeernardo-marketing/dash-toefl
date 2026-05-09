@@ -1,0 +1,6 @@
+.env
+*.log
+*.bak
+__pycache__/
+*.pyc
+deploy.zip

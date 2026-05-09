@@ -1,0 +1,52 @@
+name: Atualizar BI TOEFL
+
+on:
+  schedule:
+    # A cada 2h em horario comercial: 8h-20h Brasilia (11-23 UTC)
+    - cron: '0 11-23/2 * * *'
+  workflow_dispatch:  # roda manualmente
+
+permissions:
+  contents: write
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar deps
+        run: pip install -r requirements.txt
+
+      - name: Rodar atualizacao Meta Ads
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PERIODO_INICIO: '2026-01-01'
+        run: python atualizar_bi.py
+
+      - name: Rodar atualizacao Instagram Organico
+        env:
+          META_ACCESS_TOKEN: ${{ secrets.META_ACCESS_TOKEN }}
+          META_AD_ACCOUNT_ID: ${{ secrets.META_AD_ACCOUNT_ID }}
+          PERIODO_INICIO: '2026-01-01'
+        run: python atualizar_bi_instagram.py
+        continue-on-error: true  # nao falha o job se IG der erro pontual
+
+      - name: Commit e push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          if git diff --staged --quiet; then
+            echo "Sem mudancas no HTML"
+          else
+            git commit -m "Auto-update BI $(date -u +'%Y-%m-%d %H:%M UTC')"
+            git push
+          fi

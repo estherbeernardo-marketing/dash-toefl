@@ -39,6 +39,18 @@ jobs:
         run: python atualizar_bi_instagram.py
         continue-on-error: true  # nao falha o job se IG der erro pontual
 
+      - name: Rodar atualizacao Google Ads
+        env:
+          GOOGLE_DEVELOPER_TOKEN: ${{ secrets.GOOGLE_DEVELOPER_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          GOOGLE_LOGIN_CUSTOMER_ID: ${{ secrets.GOOGLE_LOGIN_CUSTOMER_ID }}
+          GOOGLE_CLIENT_CUSTOMER_ID: ${{ secrets.GOOGLE_CLIENT_CUSTOMER_ID }}
+          PERIODO_INICIO: '2026-01-01'
+        run: python atualizar_bi_google.py
+        continue-on-error: true
+
       - name: Commit e push
         run: |
           git config user.name "github-actions[bot]"

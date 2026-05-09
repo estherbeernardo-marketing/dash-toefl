@@ -4,3 +4,5 @@
 __pycache__/
 *.pyc
 deploy.zip
+oauth_client.json
+google-ads.yaml

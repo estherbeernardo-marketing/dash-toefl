@@ -652,6 +652,32 @@ function sectionResumo() {
 
     html += renderStatusFilter(camps.length, allCamps.length);
     html += renderCampTable(camps, {primary:'both'});
+
+    // Google Ads campanhas
+    var gCamps = (GOOGLE_CAMPAIGNS || []).slice().sort((a,b) => b.cost - a.cost);
+    if (gCamps.length > 0) {
+        html += '<div class="panel"><div class="panel-title">🔍 Campanhas Google Ads (período total)</div><div style="overflow-x:auto"><table>';
+        html += '<thead><tr><th>Campanha</th><th>Status</th><th>Tipo</th><th class="num">Invest.</th><th class="num">Imp.</th><th class="num">Cliques</th><th class="num">CTR</th><th class="num">CPC</th><th class="num">Conv.</th><th class="num">CPA</th><th class="num">ROAS</th></tr></thead><tbody>';
+        gCamps.forEach(c => {
+            var statusCls = c.status === 'ENABLED' ? 'ativo' : 'pausado';
+            var statusLbl = c.status === 'ENABLED' ? '✓ Ativa' : (c.status === 'PAUSED' ? '⏸ Pausada' : c.status);
+            html += '<tr>';
+            html += '<td class="nome-cell" title="' + (c.name||'').replace(/"/g,'&quot;') + '">' + c.name + '</td>';
+            html += '<td><span class="modal-tag ' + statusCls + '">' + statusLbl + '</span></td>';
+            html += '<td>' + (c.channel || '-') + '</td>';
+            html += '<td class="num">' + fmtBRL(c.cost) + '</td>';
+            html += '<td class="num">' + fmtNum(c.impressions) + '</td>';
+            html += '<td class="num">' + fmtNum(c.clicks) + '</td>';
+            html += '<td class="num">' + fmtPct(c.ctr) + '</td>';
+            html += '<td class="num">' + fmtBRL(c.cpc) + '</td>';
+            html += '<td class="num"><strong>' + fmtNum(Math.round(c.conversions)) + '</strong></td>';
+            html += '<td class="num">' + (c.conversions > 0 ? fmtBRL(c.cpa) : '—') + '</td>';
+            html += '<td class="num">' + (c.roas > 0 ? c.roas.toFixed(2) + 'x' : '—') + '</td>';
+            html += '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+    }
+
     return html;
 }
 

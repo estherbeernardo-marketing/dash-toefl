@@ -2,8 +2,9 @@ name: Atualizar BI TOEFL
 
 on:
   schedule:
-    # A cada 2h em horario comercial: 8h-20h Brasilia (11-23 UTC)
-    - cron: '0 11-23/2 * * *'
+    # 2x/dia: 08:30 e 20:00 Brasilia (11:30 e 23:00 UTC)
+    - cron: '30 11 * * *'
+    - cron: '0 23 * * *'
   workflow_dispatch:  # roda manualmente
 
 permissions:

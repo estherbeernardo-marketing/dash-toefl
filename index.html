@@ -640,7 +640,6 @@ function sectionResumo() {
     html += '<tr><td>🖱 Cliques</td><td class="num">' + fmtNum(agg.clicks) + '</td><td class="num">' + fmtNum(g.clicks) + '</td><td class="num"><strong>' + fmtNum(totalClicks) + '</strong></td></tr>';
     html += '<tr><td>📄 LP Views</td><td class="num">' + fmtNum(agg.lp_views) + '</td><td class="num" style="color:var(--muted)">—</td><td class="num"><strong>' + fmtNum(agg.lp_views) + '</strong></td></tr>';
     html += '<tr><td>🛒 Add to Cart</td><td class="num">' + fmtNum(agg.add_to_cart) + '</td><td class="num">' + fmtNum(Math.round(g.add_to_cart)) + '</td><td class="num"><strong>' + fmtNum(agg.add_to_cart + Math.round(g.add_to_cart)) + '</strong></td></tr>';
-    html += '<tr><td>🧾 Checkout</td><td class="num">' + fmtNum(agg.initiate_checkout) + '</td><td class="num">' + fmtNum(Math.round(g.begin_checkout)) + '</td><td class="num"><strong>' + fmtNum(agg.initiate_checkout + Math.round(g.begin_checkout)) + '</strong></td></tr>';
     html += '<tr><td>💵 Vendas / Compras</td><td class="num">' + fmtNum(agg.purchases) + '</td><td class="num">' + fmtNum(Math.round(g.conversions)) + '</td><td class="num"><strong>' + fmtNum(totalVendas) + '</strong></td></tr>';
     html += '</tbody></table></div>';
 
@@ -651,7 +650,6 @@ function sectionResumo() {
         {lbl:'Cliques', val: agg.clicks + g.clicks},
         {lbl:'LP Views', val: agg.lp_views},
         {lbl:'Add to Cart', val: agg.add_to_cart + Math.round(g.add_to_cart)},
-        {lbl:'Checkout', val: agg.initiate_checkout + Math.round(g.begin_checkout)},
         {lbl:'Compras', val: totalVendas}
     ];
     html += renderFunilBars(funilGeral, 'Funil Geral (Meta + Google)');
@@ -716,7 +714,6 @@ function sectionBloco(filter, titulo, primary) {
         return html;
     }
     html += renderKPIs(aggAll, {primary:primary});
-    html += renderFunil(aggAll, primary);
     html += renderStatusFilter(campsFiltered.length, camps.length);
     html += renderCampTable(campsFiltered, {primary:primary});
     return html;
@@ -1099,7 +1096,6 @@ function sectionMetaAds() {
         {lbl:'Cliques', val: agg.clicks},
         {lbl:'LP Views', val: agg.lp_views},
         {lbl:'Add to Cart', val: agg.add_to_cart},
-        {lbl:'Checkout', val: agg.initiate_checkout},
         {lbl:'Compras', val: agg.purchases}
     ];
     html += renderFunilBars(funilMeta, 'Funil Meta Ads');
@@ -1162,7 +1158,6 @@ function sectionGoogleAds() {
         {lbl:'Impressões', val: t.impressions},
         {lbl:'Cliques', val: t.clicks},
         {lbl:'Add to Cart', val: Math.round(t.add_to_cart)},
-        {lbl:'Checkout', val: Math.round(t.begin_checkout)},
         {lbl:'Compras', val: Math.round(t.conversions)}
     ];
     html += renderFunilBars(funilGoogle, 'Funil Google Ads');

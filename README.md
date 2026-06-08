@@ -28,6 +28,6 @@ Abra o `index.html` no navegador.
 
 Mesmo processo do BI Fogaça (ver `dashboard-fogaca/README.md`):
 
-1. Repo privado no GitHub `bi-toefl`
+1. Repo privado no GitHub `dash-toefl`
 2. Secrets: `META_ACCESS_TOKEN`, `META_AD_ACCOUNT_ID=act_590951675637306`
-3. Cloudflare Pages → conectar repo → URL `https://bi-toefl.pages.dev`
+3. Cloudflare Pages → conectar repo → URL **`https://dash-toefl.pages.dev`** (deploy automatico a cada push do GitHub Actions)

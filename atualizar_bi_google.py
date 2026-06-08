@@ -72,32 +72,54 @@ def fetch_account(client):
 def fetch_daily(client, since, until):
     log(f'Buscando serie diaria ({since} -> {until})...')
     svc = client.get_service('GoogleAdsService')
+    # Base: custo, impressoes, cliques e todas-conversoes (sem filtro de categoria)
     q = f"""
         SELECT
           segments.date,
           metrics.cost_micros, metrics.impressions, metrics.clicks,
-          metrics.conversions, metrics.conversions_value,
           metrics.all_conversions
         FROM customer
         WHERE segments.date BETWEEN '{since}' AND '{until}'
     """
+    def _novo_dia(d):
+        return {
+            'date': d, 'cost': 0, 'impressions': 0, 'clicks': 0,
+            'conversions': 0, 'conv_value': 0, 'all_conversions': 0,
+            'add_to_cart': 0, 'begin_checkout': 0
+        }
     rows_by_date = {}
     for row in svc.search(customer_id=CLIENT_CUSTOMER_ID, query=q):
         d = row.segments.date
         m = row.metrics
-        rows_by_date.setdefault(d, {
-            'date': d, 'cost': 0, 'impressions': 0, 'clicks': 0,
-            'conversions': 0, 'conv_value': 0, 'all_conversions': 0
-        })
-        agg = rows_by_date[d]
+        agg = rows_by_date.setdefault(d, _novo_dia(d))
         agg['cost'] = round(micros(m.cost_micros), 2)
         agg['impressions'] = m.impressions
         agg['clicks'] = m.clicks
-        agg['conversions'] = round(m.conversions, 2)
-        agg['conv_value'] = round(m.conversions_value, 2)
         agg['all_conversions'] = round(m.all_conversions, 2)
+    # Etapas do funil por categoria: Carrinho (ADD_TO_CART), Checkout (BEGIN_CHECKOUT), Venda (PURCHASE).
+    # 'conversions' fica sendo SO compras (vendas), p/ manter compatibilidade com o resto do dash.
+    qp = f"""
+        SELECT
+          segments.date, segments.conversion_action_category,
+          metrics.conversions, metrics.conversions_value
+        FROM customer
+        WHERE segments.date BETWEEN '{since}' AND '{until}'
+          AND segments.conversion_action_category IN ('PURCHASE', 'ADD_TO_CART', 'BEGIN_CHECKOUT')
+    """
+    for row in svc.search(customer_id=CLIENT_CUSTOMER_ID, query=qp):
+        d = row.segments.date
+        cat = row.segments.conversion_action_category.name
+        m = row.metrics
+        agg = rows_by_date.setdefault(d, _novo_dia(d))
+        if cat == 'PURCHASE':
+            agg['conversions'] = round(agg['conversions'] + m.conversions, 2)
+            agg['conv_value'] = round(agg['conv_value'] + m.conversions_value, 2)
+        elif cat == 'ADD_TO_CART':
+            agg['add_to_cart'] = round(agg['add_to_cart'] + m.conversions, 2)
+        elif cat == 'BEGIN_CHECKOUT':
+            agg['begin_checkout'] = round(agg['begin_checkout'] + m.conversions, 2)
     rows = sorted(rows_by_date.values(), key=lambda x: x['date'])
-    log(f'  {len(rows)} dias')
+    log(f'  {len(rows)} dias (conversoes=compras; +carrinho/checkout p/ funil)')
     return rows
 
 def fetch_campaigns(client, since, until):
@@ -107,9 +129,7 @@ def fetch_campaigns(client, since, until):
         SELECT
           campaign.id, campaign.name, campaign.status, campaign.advertising_channel_type,
           campaign.bidding_strategy_type, campaign_budget.amount_micros,
-          metrics.cost_micros, metrics.impressions, metrics.clicks,
-          metrics.conversions, metrics.conversions_value,
-          metrics.average_cpc, metrics.average_cpm, metrics.ctr
+          metrics.cost_micros, metrics.impressions, metrics.clicks
         FROM campaign
         WHERE segments.date BETWEEN '{since}' AND '{until}'
     """
@@ -131,8 +151,20 @@ def fetch_campaigns(client, since, until):
         agg['cost'] += round(micros(m.cost_micros), 2)
         agg['impressions'] += m.impressions
         agg['clicks'] += m.clicks
-        agg['conversions'] += m.conversions
-        agg['conv_value'] += m.conversions_value
+    # Conversoes e valor por campanha: APENAS compras/vendas (categoria PURCHASE)
+    qp = f"""
+        SELECT
+          campaign.id, segments.conversion_action_category,
+          metrics.conversions, metrics.conversions_value
+        FROM campaign
+        WHERE segments.date BETWEEN '{since}' AND '{until}'
+          AND segments.conversion_action_category = 'PURCHASE'
+    """
+    for row in svc.search(customer_id=CLIENT_CUSTOMER_ID, query=qp):
+        cid = str(row.campaign.id); m = row.metrics
+        if cid in by_id:
+            by_id[cid]['conversions'] += m.conversions
+            by_id[cid]['conv_value'] += m.conversions_value
     # calcula derivados
     camps = []
     for c in by_id.values():

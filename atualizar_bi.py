@@ -43,6 +43,10 @@ LEAD_ACTION_TYPES = {
 PURCHASE_ACTION_TYPES = {
     'purchase', 'offsite_conversion.fb_pixel_purchase', 'omni_purchase',
 }
+# Add to cart / Initiate checkout — ordem de prioridade p/ dedup (omni > generico > pixel).
+# Esses 3 reportam o MESMO evento; somar todos infla 2-3x (mesma logica das compras).
+ADD_TO_CART_PRIORITY = ('omni_add_to_cart', 'add_to_cart', 'offsite_conversion.fb_pixel_add_to_cart')
+INITIATE_CHECKOUT_PRIORITY = ('omni_initiated_checkout', 'initiate_checkout', 'offsite_conversion.fb_pixel_initiate_checkout')
 # Acoes de engajamento (Instagram + post)
 POST_ENGAGEMENT_TYPES = {'post_engagement'}
 PAGE_ENGAGEMENT_TYPES = {'page_engagement'}
@@ -180,6 +184,20 @@ def somar_purchases_unique(actions):
         if counts.get(key): return counts[key]
     return 0
 
+def somar_unique_prioridade(actions, priority_keys):
+    """Soma 1 valor unico, escolhendo o 1o action_type presente na ordem de prioridade.
+    Evita inflar quando omni/generico/pixel reportam o MESMO evento (ATC, checkout)."""
+    if not actions: return 0
+    counts = {}
+    for a in actions:
+        at = a.get('action_type')
+        if at in priority_keys:
+            try: counts[at] = int(a.get('value', 0))
+            except: pass
+    for key in priority_keys:
+        if counts.get(key): return counts[key]
+    return 0
+
 # ========== 1. DAILY DATA (conta) ==========
 def fetch_daily_data():
     log('Buscando dados diarios da conta...')
@@ -203,6 +221,8 @@ def fetch_daily_data():
             'link_clicks': somar_actions(actions, {'link_click'}),
             'lp_views': somar_actions(actions, {'landing_page_view'}),
             'leads': somar_actions(actions, LEAD_ACTION_TYPES),
+            'add_to_cart': somar_unique_prioridade(actions, ADD_TO_CART_PRIORITY),
+            'initiate_checkout': somar_unique_prioridade(actions, INITIATE_CHECKOUT_PRIORITY),
             'purchases': somar_purchases_unique(actions),
             'post_engagement': somar_actions(actions, POST_ENGAGEMENT_TYPES),
             'page_engagement': somar_actions(actions, PAGE_ENGAGEMENT_TYPES),
